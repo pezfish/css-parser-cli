@@ -7,9 +7,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
+  "bin": {
+    "css-parser": "./index.js"
+  },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "commander": "^2.9.0",
     "got": "^6.6.3",
     "phantomjs-prebuilt": "^2.1.13"
   }
