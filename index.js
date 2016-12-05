@@ -1,44 +1,54 @@
-//Lets require/import the HTTP module
-var http = require('http');
-var exec = require('child_process').exec;
+const path = require('path');
+const http = require('http');
+const child_process = require('child_process');
+const events = require('events');
+const fs = require('fs');
+const phantomjs = require('phantomjs-prebuilt');
+const got = require('got');
 
-//Lets define a port we want to listen to
-const PORT=8080;
-var data;
 
-//We need a function which handles requests and send response
-function handleRequest(request, response){
-	response.end('<!DOCTYPE HTML><link href="//cdn.wcdc.business.comcast.com/bundles/BSEE/css/global" rel="stylesheet"/>');
-}
+const PORT = 8080;
+const phantomBinPath = phantomjs.path;
+const phantomArgs = [
+	path.join(__dirname, 'phantom-script.js')
+];
+const eventEmitter = new events.EventEmitter();
 
-//Create a server
-var server = http.createServer(handleRequest);
+var cssData;
 
-//Lets start our server
-server.listen(PORT, function(){
-	//Callback triggered when server is successfully listening. Hurray!
-	console.log("Server listening on: http://localhost:%s", PORT);
-	exec('phantomjs phantom-script.js', (error, stdout, stderr) => {
-		if (error) {
-			console.error(`exec error: ${error}`);
-			return;
-		}
-		if (stdout) {
-			data = JSON.parse(stdout);
-			// console.log(JSON.parse(data));
-			// console.log(`stdout: ${stdout}`);
-			doNextThing();
-		}
-		if (stderr) {
-			console.log(`stderr: ${stderr}`);
-		}
-		server.close();
+got('https://www.thinkbrownstone.com/wp-content/themes/tbiv2/css/main.min.css')
+	.then(response => {
+		cssData = response.body;
+		createServer();
 	});
 
-	// console.log(data);
+function handleRequest(request, response) {
+	if(request.url === '/') {
+		response.end('<!DOCTYPE HTML><link href="/stylesheet.css" rel="stylesheet"/>');
+	}
 
-});
-
-function doNextThing() {
-	console.log(data[0]);
+	if(request.url === '/stylesheet.css') {
+		response.end(cssData);
+	}
 }
+
+function createServer() {
+	var server = http.createServer(handleRequest);
+
+	server.listen(PORT, () => {
+		child_process.execFile(phantomBinPath, phantomArgs, (err, stdout, stderr) => {
+			if(stdout) {
+				// console.log(stdout);
+				eventEmitter.emit('css-data-received', stdout);
+				// server.close();
+			}
+		});
+	});
+}
+
+function processCSSData(data) {
+	fs.writeFile('tmp/output', data);
+	// console.log(data);
+}
+
+eventEmitter.on('css-data-received', processCSSData);

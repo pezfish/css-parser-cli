@@ -8,5 +8,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "got": "^6.6.3",
+    "phantomjs-prebuilt": "^2.1.13"
+  }
 }
