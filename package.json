@@ -15,6 +15,7 @@
   "dependencies": {
     "commander": "^2.9.0",
     "got": "^6.6.3",
-    "phantomjs-prebuilt": "^2.1.13"
+    "phantomjs-prebuilt": "^2.1.13",
+    "specificity": "^0.3.0"
   }
 }

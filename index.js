@@ -45,9 +45,8 @@ function createServer() {
 	server.listen(PORT, () => {
 		child_process.execFile(phantomBinPath, phantomArgs, (err, stdout, stderr) => {
 			if(stdout) {
-				// console.log(stdout);
 				eventEmitter.emit('css-data-received', stdout);
-				// server.close();
+				server.close();
 			}
 		});
 	});
