@@ -12,9 +12,9 @@ page.open('http://localhost:8080', function (status) {
 				var selectors = [];
 				var knownType;
 
-				// if (!cssRules) {
-				// 	return;
-				// }
+				if (!cssRules) {
+					console.log('No CSS rules found.');
+				}
 
 				/*
 					rules : [
@@ -43,13 +43,12 @@ page.open('http://localhost:8080', function (status) {
  					for(var i = 0; i < style.length; i++) {
  						temp = {};
  						temp.property = style[i];
- 						temp.value = style[temp.property];
+ 						temp.value = style[temp.property].replace('http://localhost:8080', '');
  						output.push(temp);
  					}
 
  					return output;
  				}
-
 
 				for (var i = 0; i < cssRules.length; i++) {
 					knownType = false;
@@ -89,6 +88,7 @@ page.open('http://localhost:8080', function (status) {
 
 					if(!knownType) {
 						css.push({
+							index: i,
 							type: cssRules[i].toString()
 						});
 					}
@@ -97,7 +97,8 @@ page.open('http://localhost:8080', function (status) {
 				return css;
 			}
 		);
-		console.log(JSON.stringify(outputData));
+		console.log(JSON.stringify(outputData, null, 4));
+		// console.log(outputData);
 	}
 	phantom.exit();
 });

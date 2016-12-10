@@ -8,15 +8,15 @@ const fs = require('fs');
 const phantomjs = require('phantomjs-prebuilt');
 const got = require('got');
 const program = require('commander');
+const specificity = require('specificity');
 
 const PORT = 8080;
-const phantomBinPath = phantomjs.path;
-const phantomArgs = [
-	path.join(__dirname, 'phantom-script.js')
-];
+
 const eventEmitter = new events.EventEmitter();
 
 var cssData;
+var processedData;
+var data = '';
 
 program
 	.version('0.1.0')
@@ -35,6 +35,7 @@ function handleRequest(request, response) {
 	}
 
 	if(request.url === '/stylesheet.css') {
+		response.setHeader('content-type', 'text/css');
 		response.end(cssData);
 	}
 }
@@ -43,17 +44,39 @@ function createServer() {
 	var server = http.createServer(handleRequest);
 
 	server.listen(PORT, () => {
-		child_process.execFile(phantomBinPath, phantomArgs, (err, stdout, stderr) => {
-			if(stdout) {
-				eventEmitter.emit('css-data-received', stdout);
-				server.close();
-			}
+		const spawn = phantomjs.exec('phantom-script.js');
+		spawn.stdout.on('data', (chunk) => {
+			data += chunk;
+		});
+
+		spawn.stdout.on('end', () => {
+			eventEmitter.emit('css-data-received', data);
+			server.close();
+		});
+
+		spawn.stderr.on('data', (data) => {
+			console.log(`stderr: ${data}`);
+			server.close();
 		});
 	});
 }
 
-function processCSSData(data) {
-	console.log(data);
+function output(output) {
+	console.log(output);
 }
 
-eventEmitter.on('css-data-received', processCSSData);
+function parseData(data) {
+	processedData = JSON.parse(data);
+	processedData.map((obj, index) => {
+		obj.index = index;
+		obj.length = String(obj.selector).length;
+		obj.specificity = parseInt(specificity.calculate(String(obj.selector))[0].specificityArray.join(''), 10);
+	});
+
+
+
+	// temp = processedData[1800];
+	// output(temp);
+}
+
+eventEmitter.on('css-data-received', parseData);
