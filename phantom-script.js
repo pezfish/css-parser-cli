@@ -88,7 +88,6 @@ page.open('http://localhost:8080', function (status) {
 
 					if(!knownType) {
 						css.push({
-							index: i,
 							type: cssRules[i].toString()
 						});
 					}

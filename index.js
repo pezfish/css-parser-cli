@@ -17,10 +17,12 @@ const eventEmitter = new events.EventEmitter();
 var cssData;
 var processedData;
 var data = '';
+var outputData = '';
 
 program
 	.version('0.1.0')
 	.option('-f, --file [required]', 'Absolute URL to CSS file to parse')
+	.option('-o, --output [required]', 'Path to output csv')
 	.parse(process.argv);
 
 got(program.file)
@@ -41,7 +43,7 @@ function handleRequest(request, response) {
 }
 
 function createServer() {
-	var server = http.createServer(handleRequest);
+	let server = http.createServer(handleRequest);
 
 	server.listen(PORT, () => {
 		const spawn = phantomjs.exec('phantom-script.js');
@@ -61,11 +63,53 @@ function createServer() {
 	});
 }
 
-function output(output) {
-	console.log(output);
+function output(data) {
+	fs.writeFile(program.output, data, (error) => {
+		if(error) {
+			return console.log(error);
+		}
+	});
 }
 
-function parseData(data) {
+function createOutputArray(data) {
+	let headings = [];
+	let row;
+	let currPropIndex;
+
+	data.map((obj) => {
+		for(let key in obj.declaration) {
+			headings.push('"' + obj.declaration[key].property + '"');
+		}
+	});
+
+	headings = [...new Set(headings)];
+	headings.sort();
+	headings.unshift('Index', 'Selector', 'Media Query', 'Length', 'Specificity', 'Type');
+	outputData += headings.join();
+	outputData += '\r';
+
+	data.map((obj) => {
+		row = [];
+		row.push(obj.index);
+		row.push(obj.selector);
+		row.push(obj.mediaQuery);
+		row.push(obj.length);
+		row.push(obj.specificity);
+		row.push(obj.type);
+
+		for(let key in obj.declaration) {
+			currPropIndex = headings.indexOf('"' + obj.declaration[key].property + '"');
+			row[currPropIndex] = '"' + obj.declaration[key].value + '"';
+		}
+
+		outputData += row.join();
+		outputData += '\r';
+	});
+
+	output(outputData);
+}
+
+function addAdditionalData(data) {
 	processedData = JSON.parse(data);
 	processedData.map((obj, index) => {
 		obj.index = index;
@@ -73,10 +117,7 @@ function parseData(data) {
 		obj.specificity = parseInt(specificity.calculate(String(obj.selector))[0].specificityArray.join(''), 10);
 	});
 
-
-
-	// temp = processedData[1800];
-	// output(temp);
+	createOutputArray(processedData);
 }
 
-eventEmitter.on('css-data-received', parseData);
+eventEmitter.on('css-data-received', addAdditionalData);
