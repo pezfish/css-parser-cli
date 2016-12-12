@@ -34,11 +34,12 @@ got(program.file)
 function handleRequest(request, response) {
 	if(request.url === '/') {
 		response.end('<!DOCTYPE HTML><link href="/stylesheet.css" rel="stylesheet"/>');
-	}
-
-	if(request.url === '/stylesheet.css') {
+	} else if (request.url === '/stylesheet.css') {
 		response.setHeader('content-type', 'text/css');
 		response.end(cssData);
+	} else {
+		response.writeHead(404, {'Content-Type': 'text/html'});
+		response.end('');
 	}
 }
 
