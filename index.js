@@ -10,8 +10,6 @@ const got = require('got');
 const program = require('commander');
 const specificity = require('specificity');
 
-const PORT = 8080;
-
 const eventEmitter = new events.EventEmitter();
 
 var cssData;
@@ -23,6 +21,7 @@ program
 	.version('0.1.0')
 	.option('-f, --file [required]', 'Absolute URL to CSS file to parse')
 	.option('-o, --output [required]', 'Path to output csv')
+	.option('-p, --port [optional]', 'Specify port to use, defaults to 3000', 3000)
 	.parse(process.argv);
 
 got(program.file)
@@ -46,8 +45,8 @@ function handleRequest(request, response) {
 function createServer() {
 	let server = http.createServer(handleRequest);
 
-	server.listen(PORT, () => {
-		const spawn = phantomjs.exec('phantom-script.js');
+	server.listen(program.port, () => {
+		const spawn = phantomjs.exec('phantom-script.js', program.port);
 		spawn.stdout.on('data', (chunk) => {
 			data += chunk;
 		});

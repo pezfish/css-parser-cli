@@ -1,10 +1,14 @@
 var page = require('webpage').create();
-var outputData = {};
+var system = require('system')
+var args = system.args;
 
-page.open('http://localhost:8080', function (status) {
+var outputData = {};
+var port = args[1];
+
+page.open('http://localhost:' + port, function (status) {
 	if(status === 'success') {
 		outputData = page.evaluate(
-			function () {
+			function (port) {
 				var css = [];
 				var cssRules = document.styleSheets[0].cssRules;
 				var rule;
@@ -43,7 +47,7 @@ page.open('http://localhost:8080', function (status) {
  					for(var i = 0; i < style.length; i++) {
  						temp = {};
  						temp.property = style[i];
- 						temp.value = style[temp.property].replace('http://localhost:8080', '');
+ 						temp.value = style[temp.property].replace('http://localhost:' + port, '');
  						output.push(temp);
  					}
 
@@ -97,7 +101,6 @@ page.open('http://localhost:8080', function (status) {
 			}
 		);
 		console.log(JSON.stringify(outputData, null, 4));
-		// console.log(outputData);
 	}
 	phantom.exit();
 });
